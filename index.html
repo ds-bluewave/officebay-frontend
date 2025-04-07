@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OfficeBay - Rezerwacja biurek</title>
+    <script src="https://cdn.jsdelivr.net/npm/konva@8.3.7/konva.min.js"></script>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .controls {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            width: 80%;
+            max-width: 700px;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            width: 80%;
+            max-width: 700px;
+            text-align: left;
+        }
+        button {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+
+
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #333;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.toast.show {
+    opacity: 1;
+}
+    </style>
+</head>
+<body>
+    <div id="toast" class="toast"></div>
+
+    <h1>OfficeBay - Rezerwacja biurek</h1>
+    
+    <div class="container">
+        <div class="controls">
+            <button id="refreshBtn">Odśwież dane</button>
+            <button id="reserveBtn" disabled>Zarezerwuj wybrane biurko</button>
+            <button id="releaseBtn" disabled>Zwolnij wybrane biurko</button>
+        </div>
+        
+        <div id="container"></div>
+        
+        <div class="info-panel">
+            <h3>Informacje o wybranym biurku</h3>
+            <div id="desk-info">Wybierz biurko, aby zobaczyć szczegóły</div>
+        </div>
+    </div>
+
+<script>
+// Konfiguracja API
+const API_URL = 'http://localhost:9090';
+let selectedDesk = null;
+let desksData = [];
+
+// Nagłówki dla wszystkich zapytań
+const headers = {
+  'Content-Type': 'application/json',
+  'Authorization': 'Basic dXNlcjpwYXNzd29yZA=='
+};
+
+// Dane o układzie biura
+const officeData = {
+    rooms: [
+        { id: 2, x: 10, y: 10, width: 300, height: 200, name: "Pokój B" },
+        { id: 1, x: 10, y: 220, width: 300, height: 200, name: "Pokój A" }
+    ],
+    doors: [
+        // Drzwi do pokoju B
+        { x: 10, y: 85, width: 10, height: 50 },
+        { x: 80, y: 200, width: 50, height: 10 },
+        // Drzwi do pokoju A
+        { x: 10, y: 295, width: 10, height: 50 },
+        { x: 80, y: 220, width: 50, height: 10 }
+    ],
+    windows: [
+        // Okno w pokoju B
+        { x1: 310, y1: 10, x2: 310, y2: 120 },
+        // Okno w pokoju A
+        { x1: 310, y1: 220, x2: 310, y2: 330 }
+    ]
+};
+
+// Inicjalizacja Konva
+const stage = new Konva.Stage({
+    container: 'container',
+    width: 700,
+    height: 450
+});
+
+const layer = new Konva.Layer();
+stage.add(layer);
+
+// Rysowanie pokoi
+officeData.rooms.forEach(room => {
+    const rect = new Konva.Rect({
+        x: room.x,
+        y: room.y,
+        width: room.width,
+        height: room.height,
+        fill: 'lightgray',
+        stroke: 'black',
+        strokeWidth: 2
+    });
+    layer.add(rect);
+    
+    const label = new Konva.Text({
+        x: room.x + 10,
+        y: room.y + 10,
+        text: room.name,
+        fontSize: 14,
+        fill: 'black'
+    });
+    layer.add(label);
+});
+
+// Rysowanie drzwi
+officeData.doors.forEach(door => {
+    const rect = new Konva.Rect({
+        x: door.x,
+        y: door.y,
+        width: door.width,
+        height: door.height,
+        fill: 'blue',
+        stroke: 'black',
+        strokeWidth: 1
+    });
+    layer.add(rect);
+});
+
+// Rysowanie okien
+officeData.windows.forEach(window => {
+    const line = new Konva.Line({
+        points: [window.x1, window.y1, window.x2, window.y2],
+        stroke: 'blue',
+        strokeWidth: 3
+    });
+    layer.add(line);
+});
+
+// Funkcja do pobierania danych o biurkach z API
+async function fetchDesks() {
+    try {
+        const response = await fetch(`${API_URL}/api/desk`, { headers });
+        if (!response.ok) {
+            throw new Error('Błąd pobierania danych');
+        }
+        desksData = await response.json();
+        drawDesks();
+    } catch (error) {
+        console.error('Błąd:', error);
+        alert('Nie udało się pobrać danych o biurkach');
+    }
+}
+
+// Funkcja do rysowania biurek na podstawie danych z API
+function drawDesks() {
+    // Usuń istniejące biurka
+    layer.find('.desk').forEach(node => node.destroy());
+    
+    // Mapowanie ID biurek z API na dane o położeniu
+    const deskPositions = [
+        // Biurka w pokoju B
+        { id: 3, room: 2, x: 75, y: 35, angle: 180 },
+        { id: 4, room: 2, x: 225, y: 165, angle: 0 },
+        { id: 6, room: 2, x: 125, y: 165, angle: 0 },
+        // Biurka w pokoju A
+        { id: 1, room: 1, x: 125, y: 5, angle: 0 },
+        { id: 2, room: 1, x: 225, y: 5, angle: 90 },
+        { id: 5, room: 1, x: 225, y: 5, angle: 0 }
+    ];
+    
+    // Rysowanie biurek
+    desksData.forEach(deskData => {
+        const position = deskPositions.find(pos => pos.id === deskData.id) || 
+                        { room: 1, x: 50, y: 50, angle: 0 };
+        const room = officeData.rooms.find(r => r.id === position.room);
+        const color = deskData.isAvailable ? "green" : "red";
+        
+        // Biurko jako prostokąt
+        const rect = new Konva.Rect({
+            x: position.x + room.x,
+            y: position.y + room.y,
+            width: 70,
+            height: 30,
+            fill: color,
+            stroke: 'black',
+            strokeWidth: 1,
+            cornerRadius: 5,
+            rotation: position.angle,
+            name: 'desk',
+            id: deskData.id.toString()
+        });
+        
+        // Tekst z ID biurka
+        const text = new Konva.Text({
+            x: position.x + room.x + 35,
+            y: position.y + room.y + 15,
+            text: deskData.id.toString(),
+            fontSize: 14,
+            fill: 'white',
+            fontStyle: 'bold',
+            align: 'center',
+            name: 'desk',
+            id: `text-${deskData.id}`
+        });
+        
+        text.offsetX(text.width() / 2);
+        text.offsetY(text.height() / 2);
+        text.rotation(position.angle);
+        
+        // Obsługa kliknięcia
+        rect.on("click", () => {
+            // Odznacz poprzednio wybrane biurko
+            if (selectedDesk) {
+                const prevRect = layer.findOne(`#${selectedDesk.id}`);
+                if (prevRect) {
+                    prevRect.strokeWidth(1);
+                }
+            }
+            
+            // Zaznacz nowe biurko
+            selectedDesk = deskData;
+            rect.strokeWidth(3);
+            
+            // Aktualizuj panel informacyjny
+            updateDeskInfo(deskData);
+            
+            // Aktualizuj przyciski
+            document.getElementById('reserveBtn').disabled = !deskData.isAvailable;
+            document.getElementById('releaseBtn').disabled = deskData.isAvailable;
+            
+            layer.draw();
+        });
+        
+        layer.add(rect);
+        layer.add(text);
+    });
+    
+    layer.draw();
+}
+
+// Aktualizacja informacji o biurku
+function updateDeskInfo(desk) {
+    const infoPanel = document.getElementById('desk-info');
+    infoPanel.innerHTML = `
+        <p><strong>ID:</strong> ${desk.id}</p>
+        <p><strong>Nazwa:</strong> ${desk.name || 'Brak nazwy'}</p>
+        <p><strong>Typ:</strong> ${desk.type || 'Standardowe'}</p>
+        <p><strong>Status:</strong> ${desk.isAvailable ? 'Dostępne' : 'Zarezerwowane'}</p>
+    `;
+}
+
+// Rezerwacja biurka
+async function reserveDesk(deskId) {
+    try {
+        const response = await fetch(`${API_URL}/api/desk/${deskId}/reserve`, {
+            method: 'POST',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Błąd rezerwacji biurka');
+        }
+        
+        await fetchDesks(); // Odśwież dane
+        alert('Biurko zostało zarezerwowane!');
+    } catch (error) {
+        console.error('Błąd:', error);
+        alert('Nie udało się zarezerwować biurka');
+    }
+}
+
+// Zwolnienie biurka
+async function releaseDesk(deskId) {
+    try {
+        const response = await fetch(`${API_URL}/api/desk/${deskId}/release`, {
+            method: 'POST',
+            headers: headers
+        });
+        
+        if (!response.ok) {
+            throw new Error('Błąd zwalniania biurka');
+        }
+        
+        await fetchDesks(); // Odśwież dane
+        alert('Biurko zostało zwolnione!');
+    } catch (error) {
+        console.error('Błąd:', error);
+        alert('Nie udało się zwolnić biurka');
+    }
+}
+
+// Obsługa przycisków
+document.getElementById('refreshBtn').addEventListener('click', fetchDesks);
+
+document.getElementById('reserveBtn').addEventListener('click', () => {
+    if (selectedDesk && selectedDesk.isAvailable) {
+        reserveDesk(selectedDesk.id);
+    }
+});
+
+document.getElementById('releaseBtn').addEventListener('click', () => {
+    if (selectedDesk && !selectedDesk.isAvailable) {
+        releaseDesk(selectedDesk.id);
+    }
+});
+
+function alert(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
+
+// Pobierz dane przy starcie
+fetchDesks();
+</script>
+</body>
+</html>
