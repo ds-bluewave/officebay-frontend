@@ -1,6 +1,7 @@
 'use client';
 
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import Image from 'next/image'
 
 type AboutData = {
   name: string;
@@ -41,7 +42,15 @@ export default function AboutPage() {
   return (
     <div className="max-w-2xl mx-auto p-8 bg-white dark:bg-gray-800 rounded-lg shadow-md mt-10">
       <h1 className="text-3xl font-bold mb-2">{data.name}</h1>
-      <p className="mb-4 text-gray-600 dark:text-gray-300">{data.description}</p>
+      <p className="mb-4 text-gray-600 dark:text-gray-300">
+        <Image
+          src="/officebay-logo.svg"
+          alt="OfficeBay"
+          width={128}
+          height={128}
+          className="mb-4 float-left mr-4"
+        />
+        {data.description}</p>
       <h2 className="text-xl font-semibold mt-6 mb-2">Tech Stack</h2>
       <ul className="list-disc pl-6 mb-4">
         {data.stack.map((item) => <li key={item}>{item}</li>)}
