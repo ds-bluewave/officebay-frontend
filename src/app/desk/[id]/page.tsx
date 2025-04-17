@@ -1,7 +1,7 @@
 import { fetchDeskById, fetchDeskReservations } from "@/api/apiClient";
 import Link from "next/link";
 
-export default async function DeskDetailsPage({ params }: { params: { id: string } }) {
+export default async function DeskDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const deskId = parseInt(params.id);
   const desk = await fetchDeskById(deskId);
   const reservations = await fetchDeskReservations(deskId);
