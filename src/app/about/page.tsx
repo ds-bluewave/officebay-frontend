@@ -14,6 +14,7 @@ type AboutData = {
 
 export default function AboutPage() {
   const [data, setData] = useState<AboutData | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [settings, setSettings] = useState<any>(null);
 
   useEffect(() => {

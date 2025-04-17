@@ -12,6 +12,7 @@ interface OfficeMapProps {
 
 const OfficeMap: React.FC<OfficeMapProps> = ({ desks, onDeskSelect }) => {
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const stageRef = useRef<any>(null);
 
   const officeData = {
