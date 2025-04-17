@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { checkAvailability, createReservation, Desk } from '@/api/apiClient';
+import { useUser } from '@/contexts/UserContext';
 
 interface ReservationFormProps {
   selectedDesk: Desk | null;
@@ -10,6 +11,7 @@ interface ReservationFormProps {
 }
 
 export default function ReservationForm({ selectedDesk, onReservationSuccess = () => {}, isModal = false }: ReservationFormProps) {
+  const { currentUser } = useUser();
   const [startDate, setStartDate] = useState('');
   const [startTime, setStartTime] = useState('09:00');
   const [endDate, setEndDate] = useState('');
@@ -45,11 +47,16 @@ export default function ReservationForm({ selectedDesk, onReservationSuccess = (
         setError('Wybrane biurko nie jest dostępne w podanym terminie');
         return;
       }
+
+      if (!currentUser) {
+        setError('Nie znaleziono użytkownika');
+        return;
+      }
       
       // Utwórz rezerwację
       await createReservation({
         deskId: selectedDesk.id,
-        // userId: 'jan_kowalski', // Domyślny użytkownik
+        userId: currentUser.id,
         startTime: startDateTime,
         endTime: endDateTime
       });
