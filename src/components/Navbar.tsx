@@ -12,7 +12,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <span className="text-xl font-bold">OfficeBay</span>
+              <Link href="/" className="text-xl font-bold">OfficeBay</Link>
             </div>
             <div className="ml-6 flex items-center space-x-4">
               <Link 

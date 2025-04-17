@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import { UserProvider } from "@/contexts/UserContext";
 import UserMenu from "@/components/UserMenu";
 import Image from 'next/image'
+import Link from "next/link";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -32,12 +33,12 @@ export default function RootLayout({
         <UserProvider>
           <header className="bg-white dark:bg-gray-800 shadow-md">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <div className="flex items-center space-x-2">
+              <Link href="/" className="flex items-center space-x-2">
                 <Image src="/officebay-logo.svg" alt="OfficeBay" width={72} height={72} />
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   OfficeBay
                 </h1>
-              </div>
+              </Link>
               <div className="flex items-center space-x-4">
                 {/* <UserToggle /> */}
                 <UserMenu />
