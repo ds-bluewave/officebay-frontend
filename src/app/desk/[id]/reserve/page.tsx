@@ -1,8 +1,8 @@
 import { fetchDeskById } from '@/api/apiClient';
 import ReservationForm from '@/components/ReservationForm';
 
-export default async function ReserveDeskPage({ params }: { params: { id: string } }) {
-  const deskId = parseInt(params.id);
+export default async function ReserveDeskPage({ params }: { params: Promise<{ id: string }> }) {
+  const deskId = parseInt((await params).id);
   const desk = await fetchDeskById(deskId);
   
   return (
