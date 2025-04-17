@@ -1,4 +1,4 @@
-const API_URL = 'http://localhost:9090'; // zmień na adres Twojego API
+const API_URL = 'https://officebay.onrender.com'
 const headers = {
   'Content-Type': 'application/json',
   'Authorization': 'Basic dXNlcjpwYXNzd29yZA=='
