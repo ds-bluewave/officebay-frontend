@@ -23,7 +23,7 @@ export default function RootLayout({
   calendar,
 }: Readonly<{
   children: React.ReactNode;
-  modal?: React.ReactNode;
+  modal: React.ReactNode;
   map: React.ReactNode;
   calendar: React.ReactNode;
 }>) {
