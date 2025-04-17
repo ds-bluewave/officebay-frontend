@@ -47,6 +47,11 @@ export default function QuickReservationForm({ selectedDesk, onReservationSucces
         setError('Wybrane biurko nie jest dostępne w podanym terminie');
         return;
       }
+
+      if (!currentUser) {
+        setError('Nie znaleziono użytkownika');
+        return;
+      }
       
       // Utwórz rezerwację
       await createReservation({

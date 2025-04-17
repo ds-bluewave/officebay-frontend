@@ -28,7 +28,7 @@ export default function UserToggle() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-2 rounded-md bg-gray-100 dark:bg-gray-700"
       >
-        <span>{currentUser.name}</span>
+        <span>{currentUser?.name}</span>
         <svg 
           className="w-4 h-4" 
           fill="none" 
@@ -55,7 +55,7 @@ export default function UserToggle() {
                   setIsOpen(false);
                 }}
                 className={`block w-full text-left px-4 py-2 text-sm ${
-                  currentUser.id === user.id
+                  currentUser?.id === user.id
                     ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 }`}
